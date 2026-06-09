@@ -87,6 +87,10 @@ fn handle_chat_key(app: &mut App, key: KeyEvent) -> Option<UiCommand> {
             app.open_file_browser();
             None
         }
+        KeyCode::Char('r') if ctrl => {
+            app.status = "пересканирую LAN…".to_string();
+            Some(UiCommand::RefreshDiscovery)
+        }
         KeyCode::F(1) => {
             app.show_help = true;
             None
@@ -193,6 +197,10 @@ fn submit(app: &mut App) -> Option<UiCommand> {
     }
     if line == "/verify" {
         return verify_selected(app);
+    }
+    if line == "/refresh" {
+        app.status = "пересканирую LAN…".to_string();
+        return Some(UiCommand::RefreshDiscovery);
     }
     if let Some(path) = line.strip_prefix("/file ") {
         let peer = match app.selected_peer_id() {

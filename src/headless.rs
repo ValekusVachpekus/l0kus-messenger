@@ -101,6 +101,10 @@ fn handle_line(line: &str, to_engine: &mpsc::UnboundedSender<UiCommand>, peers: 
         });
         return true;
     }
+    if line == "/refresh" {
+        let _ = to_engine.send(UiCommand::RefreshDiscovery);
+        return true;
+    }
     let target = peers.first().copied();
     let Some(peer) = target else {
         println!("STATUS нет пиров для отправки");

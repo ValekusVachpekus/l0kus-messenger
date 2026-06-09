@@ -112,6 +112,23 @@ impl Engine {
             self.identity.fingerprint(),
             self.identity.nick()
         ));
+        // Пиры, обнаруженные mDNS до Start (пока вводился ник), были отброшены, а
+        // повторно mDNS их не выдаёт. Пересоздаём поведение: кэш обнаруженных
+        // очищается и запускается новый быстрый опрос — так уже присутствующие в
+        // сети узлы находятся сразу после запуска.
+        self.refresh_discovery();
+    }
+
+    /// Пересоздать mDNS-поведение: сбрасывает кэш обнаруженных пиров и запускает
+    /// свежий опрос LAN. Вызывается при Start и по ручному обновлению.
+    fn refresh_discovery(&mut self) {
+        match crate::net::behaviour::make_mdns(self.local_peer) {
+            Ok(mdns) => {
+                self.swarm.behaviour_mut().mdns = mdns;
+                self.status("обновляю список пиров (пересканирование LAN)…".to_string());
+            }
+            Err(e) => self.status(format!("не удалось пересканировать сеть: {e}")),
+        }
     }
 
     pub async fn run(mut self) -> Result<()> {
@@ -190,6 +207,11 @@ impl Engine {
                 }
                 Err(e) => self.status(format!("неверный адрес {addr}: {e}")),
             },
+            UiCommand::RefreshDiscovery => {
+                if self.started {
+                    self.refresh_discovery();
+                }
+            }
             UiCommand::Quit => {}
         }
     }
