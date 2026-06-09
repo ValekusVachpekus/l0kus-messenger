@@ -2,6 +2,7 @@
 
 pub mod app;
 pub mod events;
+pub mod files;
 pub mod theme;
 pub mod view;
 

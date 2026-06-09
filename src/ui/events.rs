@@ -58,6 +58,11 @@ fn handle_setup_key(app: &mut App, key: KeyEvent) -> Option<UiCommand> {
 fn handle_chat_key(app: &mut App, key: KeyEvent) -> Option<UiCommand> {
     let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
 
+    // Открытый файловый браузер перехватывает весь ввод.
+    if app.file_browser.is_some() {
+        return handle_browser_key(app, key);
+    }
+
     // Оверлей помощи перехватывает ввод: любая клавиша его закрывает.
     if app.show_help {
         if matches!(key.code, KeyCode::Char('c')) && ctrl {
@@ -78,6 +83,10 @@ fn handle_chat_key(app: &mut App, key: KeyEvent) -> Option<UiCommand> {
             Some(UiCommand::Quit)
         }
         KeyCode::Char('v') if ctrl => verify_selected(app),
+        KeyCode::Char('f') if ctrl => {
+            app.open_file_browser();
+            None
+        }
         KeyCode::F(1) => {
             app.show_help = true;
             None
@@ -110,6 +119,52 @@ fn handle_chat_key(app: &mut App, key: KeyEvent) -> Option<UiCommand> {
         KeyCode::Char(c) => {
             app.input.push(c);
             None
+        }
+        _ => None,
+    }
+}
+
+// --- файловый браузер --------------------------------------------------------
+
+fn handle_browser_key(app: &mut App, key: KeyEvent) -> Option<UiCommand> {
+    let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+    if matches!(key.code, KeyCode::Char('c')) && ctrl {
+        app.should_quit = true;
+        return Some(UiCommand::Quit);
+    }
+    let browser = app.file_browser.as_mut()?;
+    match key.code {
+        KeyCode::Esc => {
+            app.file_browser = None;
+            None
+        }
+        KeyCode::Up => {
+            browser.up();
+            None
+        }
+        KeyCode::Down => {
+            browser.down();
+            None
+        }
+        // На уровень выше.
+        KeyCode::Backspace | KeyCode::Left => {
+            browser.parent();
+            None
+        }
+        // Войти в каталог или выбрать файл.
+        KeyCode::Enter | KeyCode::Right => {
+            let peer = browser.peer;
+            match browser.activate() {
+                Some(path) => {
+                    app.file_browser = None;
+                    app.push_to_selected(
+                        Who::System,
+                        format!("отправка файла {}…", path.display()),
+                    );
+                    Some(UiCommand::SendFile { peer, path })
+                }
+                None => None,
+            }
         }
         _ => None,
     }

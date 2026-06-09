@@ -6,6 +6,7 @@ use crate::message::{AppEvent, Presence, UiCommand};
 use crate::settings::Settings;
 
 use super::StartupConfig;
+use super::files::FileBrowser;
 
 /// Кто автор строки чата.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -132,6 +133,8 @@ pub struct App {
     pub show_help: bool,
     /// Прокрутка чата вверх в строках от низа (0 — прилипли к низу).
     pub scroll: usize,
+    /// Открытый файловый браузер (выбор файла на отправку), если активен.
+    pub file_browser: Option<FileBrowser>,
 }
 
 impl App {
@@ -170,6 +173,16 @@ impl App {
             setup,
             show_help: false,
             scroll: 0,
+            file_browser: None,
+        }
+    }
+
+    /// Открыть файловый браузер для отправки файла выбранному пиру.
+    pub fn open_file_browser(&mut self) {
+        if let Some(peer) = self.selected_peer_id() {
+            self.file_browser = Some(FileBrowser::open(peer));
+        } else {
+            self.status = "нет выбранного пира для файла".to_string();
         }
     }
 
@@ -300,12 +313,13 @@ impl App {
                 done,
                 outgoing,
             } => {
+                let f = super::theme::ICON_FILE;
                 let line = match (&done, outgoing) {
                     (Some(path), _) if !outgoing => {
-                        format!("📎 получен файл «{name}» → {}", path.display())
+                        format!("{f} получен файл «{name}» → {}", path.display())
                     }
-                    (_, true) => format!("📎 отправлен файл «{name}» ({total} Б)"),
-                    _ => format!("📎 приём «{name}»: {received}/{total} Б"),
+                    (_, true) => format!("{f} отправлен файл «{name}» ({total} Б)"),
+                    _ => format!("{f} приём «{name}»: {received}/{total} Б"),
                 };
                 let p = self.peer_mut(peer);
                 p.messages.push(ChatLine::new(Who::System, line));

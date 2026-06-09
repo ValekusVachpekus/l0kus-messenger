@@ -1,41 +1,55 @@
-//! Цветовая тема TUI — «неоновый циан».
+//! Сдержанная цветовая тема TUI.
 //!
-//! Палитра задаётся через `Color::Rgb`, чтобы вид не зависел от 16-цветной
-//! схемы терминала. Здесь же — мелкие хелперы стилей.
+//! Намеренно используем стандартные 16 цветов терминала (а не RGB-неон), чтобы
+//! интерфейс был строгим и совпадал с палитрой терминала пользователя. Те же
+//! цвета применяются к подсветке файлов в браузере (как `ls`).
 
 use ratatui::style::{Color, Modifier, Style};
-use ratatui::widgets::{Block, BorderType, Borders};
+use ratatui::widgets::{Block, Borders};
 
-/// Яркий бирюзовый акцент (рамки, заголовки, наш ввод).
-pub const ACCENT: Color = Color::Rgb(0x22, 0xD3, 0xEE);
-/// Приглушённый акцент (неактивные рамки, подсказки).
-pub const ACCENT_DIM: Color = Color::Rgb(0x0E, 0x74, 0x90);
-/// Мадженту для второстепенных деталей (входящие, fingerprint).
-pub const MAGENTA: Color = Color::Rgb(0xC0, 0x84, 0xFC);
+/// Спокойный акцент (заголовки, активная рамка, наш ввод).
+pub const ACCENT: Color = Color::Cyan;
+/// Обычные рамки.
+pub const BORDER: Color = Color::DarkGray;
+/// Основной текст — цвет терминала по умолчанию.
+pub const TEXT: Color = Color::Reset;
+/// Приглушённый текст (время, подсказки, системные строки).
+pub const MUTED: Color = Color::DarkGray;
 /// Онлайн-индикатор.
-pub const ONLINE: Color = Color::Rgb(0x4A, 0xDE, 0x80);
-/// Оффлайн-индикатор / выключенное.
-pub const OFFLINE: Color = Color::Rgb(0x52, 0x5B, 0x6B);
-/// Основной текст.
-pub const TEXT: Color = Color::Rgb(0xE6, 0xED, 0xF3);
-/// Приглушённый текст (статус, системные строки).
-pub const MUTED: Color = Color::Rgb(0x7D, 0x8A, 0x99);
-/// Фон выделенной строки в списке пиров.
-pub const SEL_BG: Color = Color::Rgb(0x0B, 0x39, 0x49);
+pub const ONLINE: Color = Color::Green;
+/// Оффлайн-индикатор.
+pub const OFFLINE: Color = Color::DarkGray;
 /// Предупреждение / «не сверено».
-pub const WARN: Color = Color::Rgb(0xF5, 0xC2, 0x44);
+pub const WARN: Color = Color::Yellow;
+/// Фон выделенной строки.
+pub const SEL_BG: Color = Color::Indexed(238);
 
-/// Скруглённый блок с акцентным заголовком (заголовок копируется — `'static`).
+// ls-подобные цвета записей файлового браузера.
+pub const DIR: Color = Color::Blue;
+pub const EXEC: Color = Color::Green;
+pub const LINK: Color = Color::Cyan;
+
+// Иконки Nerd Font (нужен патченный шрифт в терминале — как и положено TUI).
+pub const ICON_ONLINE: &str = "\u{f111}"; //
+pub const ICON_OFFLINE: &str = "\u{f10c}"; //
+pub const ICON_VERIFIED: &str = "\u{f00c}"; //
+pub const ICON_FILE: &str = "\u{f0c6}"; //
+pub const ICON_WARN: &str = "\u{f071}"; //
+pub const ICON_DIR: &str = "\u{f07b}"; //
+pub const ICON_FILE_PLAIN: &str = "\u{f15b}"; //
+pub const ICON_EXEC: &str = "\u{f120}"; //
+pub const ICON_LINK: &str = "\u{f0c1}"; //
+
+/// Блок с серой рамкой и акцентным заголовком.
 pub fn panel(title: &str) -> Block<'static> {
     Block::default()
         .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(ACCENT_DIM))
+        .border_style(Style::default().fg(BORDER))
         .title_style(Style::default().fg(ACCENT).add_modifier(Modifier::BOLD))
-        .title(format!(" ◈ {title} "))
+        .title(format!(" {title} "))
 }
 
-/// Тот же блок, но с ярко-акцентной рамкой (для активного элемента).
+/// Тот же блок, но с акцентной рамкой (для активного элемента).
 pub fn panel_active(title: &str) -> Block<'static> {
     panel(title).border_style(Style::default().fg(ACCENT))
 }
